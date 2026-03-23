@@ -32,18 +32,21 @@ const AMOUNT_SATS: u64 = 20_000_000;
 
 // ── Network & Indexer config ───────────────────────────────────────────────
 const NETWORK: Network = Network::Bitcoin;
-const INDEXER_URL: &str = "https://mempool.space/api";
+const INDEXER_URL: &str = "https://alphamainindexer.dealpulley.com";
 
 // ── Fee (fixed, in sats) ──────────────────────────────────────────────────
 const FEE_SATS: u64 = 650;
 
-// ── Recipient address (where redeemed funds go) ────────────────────────────
-// TODO: Replace with your actual recipient address
-const RECIPIENT_ADDRESS: &str = "bc1q4x62ey7lss2v6xyaws2fkvatr0kxrfxnqthzna";
-
 #[tokio::main]
 async fn main() -> Result<()> {
     println!("=== BTC HTLC Redeemer Script ===\n");
+
+    // 0. Parse recipient address from CLI args
+    let args: Vec<String> = std::env::args().collect();
+    if args.len() < 2 {
+        bail!("Usage: {} <recipient_address>", args[0]);
+    }
+    let recipient_address = &args[1];
 
     // 1. Load private key from env
     let private_key_hex = std::env::var("REDEEMER_PRIVATE_KEY")
@@ -100,8 +103,8 @@ async fn main() -> Result<()> {
         println!("  txid: {} vout: {} value: {} sats", utxo.txid, utxo.vout, utxo.value);
     }
 
-    // 6. Parse recipient address
-    let recipient = Address::from_str(RECIPIENT_ADDRESS)?
+    // 6. Parse recipient address from CLI arg
+    let recipient = Address::from_str(recipient_address)?
         .require_network(NETWORK)?;
 
     // 7. Build redeem witness (with signature placeholder)
